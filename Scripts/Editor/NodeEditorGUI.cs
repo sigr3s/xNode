@@ -14,6 +14,10 @@ namespace XNodeEditor {
         /// <summary> Executed after all other window GUI. Useful if Zoom is ruining your day. Automatically resets after being run.</summary>
         public event Action onLateGUI;
 
+        private void Update() {
+            Repaint();
+        }
+
         private void OnGUI() {
             Event e = Event.current;
             Matrix4x4 m = GUI.matrix;
