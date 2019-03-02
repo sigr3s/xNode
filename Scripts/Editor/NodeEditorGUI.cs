@@ -13,6 +13,7 @@ namespace XNodeEditor {
         private int topPadding { get { return isDocked() ? 19 : 22; } }
         /// <summary> Executed after all other window GUI. Useful if Zoom is ruining your day. Automatically resets after being run.</summary>
         public event Action onLateGUI;
+        public bool hasFocus = true;
 
         private void Update() {
             Repaint();
@@ -25,7 +26,7 @@ namespace XNodeEditor {
             graphEditor = NodeGraphEditor.GetEditor(graph);
             graphEditor.position = position;
 
-            Controls();
+            if(hasFocus) Controls();
 
             DrawGrid(position, zoom, panOffset);
             DrawConnections();
