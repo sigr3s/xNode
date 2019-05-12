@@ -22,8 +22,21 @@ namespace XNode {
     /// }
     /// </code>
     /// </example>
-    [Serializable]
-    public abstract class Node : ScriptableObject {
+    //[Serializable]
+    public class Node {
+        [SerializeField] private string _name = "";
+        public string name{
+            get{
+                if(string.IsNullOrEmpty(_name)){
+                    _name = GetType().Name;
+                }
+                
+                return _name;
+            }
+            set{
+                _name = value;
+            }
+        }
         /// <summary> Used by <see cref="InputAttribute"/> and <see cref="OutputAttribute"/> to determine when to display the field value associated with a <see cref="NodePort"/> </summary>
         public enum ShowBackingValue {
             /// <summary> Never show the backing value </summary>
@@ -68,12 +81,19 @@ namespace XNode {
         /// <summary> Position on the <see cref="NodeGraph"/> </summary>
         [SerializeField] public Vector2 position;
         /// <summary> It is recommended not to modify these at hand. Instead, see <see cref="InputAttribute"/> and <see cref="OutputAttribute"/> </summary>
-        [SerializeField] private NodePortDictionary ports = new NodePortDictionary();
+        [SerializeField] public NodePortDictionary ports = new NodePortDictionary();
 
         /// <summary> Used during node instantiation to fix null/misconfigured graph during OnEnable/Init. Set it before instantiating a node. Will automatically be unset during OnEnable </summary>
         public static NodeGraph graphHotfix;
 
         protected void OnEnable() {
+            if (graphHotfix != null) graph = graphHotfix;
+            graphHotfix = null;
+            UpdateStaticPorts();
+            Init();
+        }
+
+        public Node(){
             if (graphHotfix != null) graph = graphHotfix;
             graphHotfix = null;
             UpdateStaticPorts();
@@ -117,7 +137,6 @@ namespace XNode {
                 int i = 0;
                 while (HasPort(fieldName)) fieldName = "instanceInput_" + (++i);
             } else if (HasPort(fieldName)) {
-                Debug.LogWarning("Port '" + fieldName + "' already exists in " + name, this);
                 return ports[fieldName];
             }
             NodePort port = new NodePort(fieldName, type, direction, connectionType, typeConstraint, this);
@@ -302,28 +321,8 @@ namespace XNode {
         }
 #endregion
 
-        [Serializable] private class NodePortDictionary : Dictionary<string, NodePort>, ISerializationCallbackReceiver {
-            [SerializeField] private List<string> keys = new List<string>();
-            [SerializeField] private List<NodePort> values = new List<NodePort>();
-
-            public void OnBeforeSerialize() {
-                keys.Clear();
-                values.Clear();
-                foreach (KeyValuePair<string, NodePort> pair in this) {
-                    keys.Add(pair.Key);
-                    values.Add(pair.Value);
-                }
-            }
-
-            public void OnAfterDeserialize() {
-                this.Clear();
-
-                if (keys.Count != values.Count)
-                    throw new System.Exception("there are " + keys.Count + " keys and " + values.Count + " values after deserialization. Make sure that both key and value types are serializable.");
-
-                for (int i = 0; i < keys.Count; i++)
-                    this.Add(keys[i], values[i]);
-            }
+        [Serializable] public class NodePortDictionary : Dictionary<string, NodePort> {
+           
         }
     }
 }

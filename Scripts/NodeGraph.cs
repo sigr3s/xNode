@@ -4,8 +4,21 @@ using UnityEngine;
 
 namespace XNode {
     /// <summary> Base class for all node graphs </summary>
-    [Serializable]
-    public abstract class NodeGraph : ScriptableObject {
+    //[Serializable]
+    public class NodeGraph {
+        private string _name = "";
+        public string name{
+            get{
+                if(string.IsNullOrEmpty(_name)){
+                    _name = GetType().Name;
+                }
+                
+                return _name;
+            }
+            set{
+                _name = value;
+            }
+        }
 
         /// <summary> All nodes in the graph. <para/>
         /// See: <see cref="AddNode{T}"/> </summary>
@@ -19,7 +32,7 @@ namespace XNode {
         /// <summary> Add a node to the graph by type </summary>
         public virtual Node AddNode(Type type) {
             Node.graphHotfix = this;
-            Node node = ScriptableObject.CreateInstance(type) as Node;
+            Node node = (Node) Activator.CreateInstance(type); // ;ScriptableObject.CreateInstance(type) as Node;
             node.graph = this;
             nodes.Add(node);
             return node;
@@ -28,7 +41,7 @@ namespace XNode {
         /// <summary> Creates a copy of the original node in the graph </summary>
         public virtual Node CopyNode(Node original) {
             Node.graphHotfix = this;
-            Node node = ScriptableObject.Instantiate(original);
+            Node node = (Node) Activator.CreateInstance(original.GetType());
             node.graph = this;
             node.ClearConnections();
             nodes.Add(node);
@@ -40,45 +53,21 @@ namespace XNode {
         public void RemoveNode(Node node) {
             node.ClearConnections();
             nodes.Remove(node);
-            if (Application.isPlaying) Destroy(node);
+            //if (Application.isPlaying) Destroy(node);
         }
 
         /// <summary> Remove all nodes and connections from the graph </summary>
         public void Clear() {
             if (Application.isPlaying) {
                 for (int i = 0; i < nodes.Count; i++) {
-                    Destroy(nodes[i]);
+                    //Destroy(nodes[i]);
                 }
             }
             nodes.Clear();
         }
 
-        /// <summary> Create a new deep copy of this graph </summary>
-        public XNode.NodeGraph Copy() {
-            // Instantiate a new nodegraph instance
-            NodeGraph graph = Instantiate(this);
-            // Instantiate all nodes inside the graph
-            for (int i = 0; i < nodes.Count; i++) {
-                if (nodes[i] == null) continue;
-                Node.graphHotfix = graph;
-                Node node = Instantiate(nodes[i]) as Node;
-                node.graph = graph;
-                graph.nodes[i] = node;
-            }
-
-            // Redirect all connections
-            for (int i = 0; i < graph.nodes.Count; i++) {
-                if (graph.nodes[i] == null) continue;
-                foreach (NodePort port in graph.nodes[i].Ports) {
-                    port.Redirect(nodes, graph.nodes);
-                }
-            }
-
-            return graph;
-        }
 
         private void OnDestroy() {
-            // Remove all nodes prior to graph destruction
             Clear();
         }
     }
