@@ -6,7 +6,7 @@ namespace XNode {
     /// <summary> Base class for all node graphs </summary>
     //[Serializable]
     public class NodeGraph {
-        private string _name = "";
+        [SerializeField] private string _name = "";
         public string name{
             get{
                 if(string.IsNullOrEmpty(_name)){
